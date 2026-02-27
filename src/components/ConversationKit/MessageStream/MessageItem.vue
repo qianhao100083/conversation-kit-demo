@@ -41,7 +41,7 @@ function formatTime(timestamp: number): string {
     </div>
     
     <div class="message-content">
-      <MarkdownRenderer :content="message.content" />
+      <MarkdownRenderer :content="message.content" :message-id="message.id" />
     </div>    
   </div>
 </template>

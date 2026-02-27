@@ -3,18 +3,65 @@ import { computed } from 'vue'
 
 interface Props {
   content: string
+  messageId?: string
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  messageId: ''
+})
 
-// Simple markdown parser
+// Extract headings with their indices
+function extractHeadings(content: string): Array<{ level: number; title: string; index: number }> {
+  const headings: Array<{ level: number; title: string; index: number }> = []
+  const lines = content.split('\n')
+  let charIndex = 0
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (!line) {
+      charIndex += 1
+      continue
+    }
+    const match = line.match(/^(#{1,3})\s+(.+)$/)
+    if (match && match[1] && match[2]) {
+      headings.push({
+        level: match[1].length,
+        title: match[2].trim(),
+        index: charIndex
+      })
+    }
+    charIndex += line.length + 1
+  }
+  
+  return headings
+}
+
+// Simple markdown parser with anchor IDs
 const renderedContent = computed(() => {
   let html = escapeHtml(props.content)
+  const headings = extractHeadings(props.content)
   
-  // Headers
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>')
-  html = html.replace(/^## (.+)$/gm, '<h2 data-anchor-id="heading-$1">$1</h2>')
-  html = html.replace(/^# (.+)$/gm, '<h1 data-anchor-id="heading-$1">$1</h1>')
+  // Replace headers with anchor IDs based on index
+  let headingCounter = 0
+  html = html.replace(/^### (.+)$/gm, () => {
+    const h = headings[headingCounter++]
+    if (!h) return '<h3></h3>'
+    return `<h3>${h.title}</h3>`
+  })
+  
+  html = html.replace(/^## (.+)$/gm, () => {
+    const h = headings[headingCounter++]
+    if (!h) return '<h2></h2>'
+    const anchorId = props.messageId ? `${props.messageId}-heading-${h.index}` : `heading-${h.index}`
+    return `<h2 data-anchor-id="${anchorId}">${h.title}</h2>`
+  })
+  
+  html = html.replace(/^# (.+)$/gm, () => {
+    const h = headings[headingCounter++]
+    if (!h) return '<h1></h1>'
+    const anchorId = props.messageId ? `${props.messageId}-heading-${h.index}` : `heading-${h.index}`
+    return `<h1 data-anchor-id="${anchorId}">${h.title}</h1>`
+  })
   
   // Bold and italic
   html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')

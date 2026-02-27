@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { SidePosition, TreeNode } from '../types'
+import type { SidePosition, TreeNode, SearchResult } from '../types'
 import { useActiveTab } from './composables/useActiveTab'
 import { useDragResize } from './composables/useDragResize'
 import TreeTab from './TreeTab.vue'
@@ -24,7 +24,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', width: number): void
   (e: 'update:position', position: SidePosition): void
   (e: 'nodeClick', node: TreeNode): void
-  (e: 'search', query: string): void
+  (e: 'searchResultClick', result: SearchResult): void
 }>()
 
 const { isActive, setTab } = useActiveTab('structure')
@@ -50,8 +50,8 @@ function onNodeClick(node: TreeNode) {
   emit('nodeClick', node)
 }
 
-function onSearch(query: string) {
-  emit('search', query)
+function onSearchResultClick(result: SearchResult) {
+  emit('searchResultClick', result)
 }
 </script>
 
@@ -97,7 +97,7 @@ function onSearch(query: string) {
       
       <SearchTab
         v-else
-        @search="onSearch"
+        @result-click="onSearchResultClick"
       />
     </div>
   </div>
